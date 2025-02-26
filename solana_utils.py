@@ -12,7 +12,7 @@ RPC_URL = "https://api.mainnet-beta.solana.com"
 TOKEN_MINT_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
 GET_SIGNATURE_LIMIT = 1000 # Max limit is 1000
-ONE_DAY_PERIOD = 86400 # One day is 86400
+ONE_DAY_PERIOD = 1000 # One day is 86400
 
 # Fetch token transaction signatures for a specific mint address
 def get_token_transactions(mint_address: str, period):
