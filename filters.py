@@ -6,7 +6,6 @@ def export_to_excel(wallets, filename="wallets.xlsx"):
     print(f"Saved results to {filename}")
 
 def filter_wallets(wallets_data, filter_data):
-    print(wallets_data)
     # Apply filters   
     min_win_rate = int(filter_data["Min_WR"])
     max_win_rate = int(filter_data["Max_WR"])
@@ -22,11 +21,11 @@ def filter_wallets(wallets_data, filter_data):
                         (item["trades"] >= min_trades) & (item["trades"] <= max_trades) &
                         (((item["buy"] / item["trades"]) * 100) >= min_avg_buy) & (((item["buy"] / item["trades"]) * 100) <= max_avg_buy) &
                         (item["sol_balance"] >= min_sol_balance) & (item["sol_balance"] <= max_sol_balance)]
-
-    return filtered_wallets
-    # return extract_wallet_addresses(filtered_wallets)
+    print("_____________________________________")
+    print(filtered_wallets)
+    return extract_wallet_addresses(filtered_wallets)
 
 
 def extract_wallet_addresses(response):
-    return [str(tx.wallet_address) for tx in response]  # response.value contains the list of transactions
+    return [ tx['wallet_address'] for tx in response]  # response.value contains the list of transactions
 

@@ -151,7 +151,7 @@ async def token_analysis(mint_address, filter_period, transaction_source):
             # transactions.append(transaction[0])
             position = next((index for index, item in enumerate(transactions) if item.get("wallet_address") == transaction["wallet_address"]), None)
 
-            if position:                
+            if position!=None:                
                 transactions[position]["win_rate"] = transactions[position]["win_rate"] + transaction["win_rate"]
                 transactions[position]["buy"] = transactions[position]["buy"] + transaction["buy"]
                 transactions[position]["trades"] = transactions[position]["trades"] + 1

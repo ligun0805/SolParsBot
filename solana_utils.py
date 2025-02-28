@@ -10,7 +10,7 @@ RPC_URL = "https://api.mainnet-beta.solana.com"
 TOKEN_MINT_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
 GET_SIGNATURE_LIMIT = 1000 # Max limit is 1000
-ONE_DAY_PERIOD = 1000 # One day is 86400
+ONE_DAY_PERIOD = 86000 # One day is 86400
 
 tx_source_paydium = [
     "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C", 
