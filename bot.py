@@ -1,6 +1,5 @@
 import os
 import logging
-import sys
 import asyncio
 from datetime import datetime
 from tqdm import tqdm
@@ -8,7 +7,7 @@ from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, ConversationHandler
 
-from solana_utils import extract_wallet_addresses, get_token_transactions, get_transaction_details, parse_transaction_details
+from solana_utils import get_token_transactions, get_transaction_details
 from filters import filter_wallets, export_to_excel
 
 TOKEN_INPUT, FILTER_INPUT, PROCESSING = range(3)
@@ -16,7 +15,7 @@ TOKEN_INPUT, FILTER_INPUT, PROCESSING = range(3)
 user_data = {
 }
 filter_data = [
-    "Raydium/PumpFum",
+    "Raydium/PumpFum_input_0_or_1",
     "Min_WR",
     "Max_WR",
     "Min_ROI",
@@ -35,15 +34,8 @@ filter_data = [
     "Max_Trades_1min",
     "Min_Rockets",
     "Date_Period",
-    # "EDN"
 ]
-# Token list to analyze
-IS_ANALYSIS = False
-IS_FILTER = False
-FILENAME = ""
 
-MAX_TRADE = 0
-MIN_TRADE = 0
 # Load environment variables
 load_dotenv()
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -96,7 +88,6 @@ async def receive_txt_file(update: Update, context: CallbackContext) -> int:
     os.remove(file_path)  # Clean up
 
     await update.message.reply_text(f"Now, please specify the filters.\n{filter_data[0]}:")
-    print(user_data)
 
     return FILTER_INPUT
 
@@ -110,25 +101,23 @@ async def receive_filters(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text(f"{filter_data[len(user_data[user_id]['filters'])]}:") 
         return FILTER_INPUT
     else:  
-        print(user_data[user_id]['filters'])
         return PROCESSING    
 
-async def process_data(update: Update, context: CallbackContext) -> int:
+async def process_data(update: Update, context: CallbackContext) -> int:    
     """Simulates processing token data and exports results as Excel files."""
     await update.message.reply_text("Start Analysis ... ")
     user_id = update.message.chat_id
     tokens = user_data[user_id]["tokens"]
+    transaction_source = user_data[user_id]["filters"]["Raydium/PumpFum_input_0_or_1"]
     if not user_data[user_id]["filters"]["Date_Period"]: user_data[user_id]["filters"]["Date_Period"] = 1
     for token in tokens:  
-        filename = f"{token}.xlsx"
-        transactions = await token_analysis(token, user_data[user_id]["filters"]["Date_Period"])
-        print("=============================")
-        print(transactions)
+        filename = f"{user_id}.xlsx"
+        transactions = await token_analysis(token, user_data[user_id]["filters"]["Date_Period"], transaction_source)
         if transactions:
             filtered_transactions = filter_wallets(transactions, user_data[user_id]["filters"])
+            # export_to_excel(transactions, filename)
             export_to_excel(filtered_transactions, filename)
-            print("----------------------------------------")
-            print(filtered_transactions)
+
             # Send file to user
             with open(filename, "rb") as f:
                 await context.bot.send_document(chat_id=user_id, document=f, filename=filename)
@@ -144,39 +133,33 @@ async def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 # Analyze the tokens
-async def token_analysis(mint_address, filter_period):      
-    global MAX_TRADE
-    global MIN_TRADE
+async def token_analysis(mint_address, filter_period, transaction_source):
     global FILENAME
-   
+    
     transactions = []
-    batch_size = 1 # Number of transactions to fetch in each batch 
+    batch_size = 1 # Number of transactions to fetch in each batch
     now_local = datetime.now()
     FILENAME = int(now_local.timestamp())
     
     # Token Mint Address List
     signatures = get_token_transactions(mint_address, int(filter_period))
-    
-    for i in tqdm(range(0, len(signatures), batch_size), desc="Fetching Transactions"):
+    for i in tqdm(range(0, len(signatures)), desc="Fetching Transactions"):
         batch = signatures[i:i + batch_size]
-        tasks = [get_transaction_details(sig) for sig in batch]
-        if tasks[0]:     
-            new_transaction = parse_transaction_details(tasks[0])  
-            for transaction in transactions:
-                if transaction["wallet_address"] == new_transaction["wallet_address"]:
-                    transaction["amount"] += new_transaction["amount"]
-                    transaction["ROI"] += new_transaction["ROI"]
-                    transaction["Win_Rate"] += new_transaction["Win_Rate"]
-                    transaction["Trades"] += new_transaction["Trades"]
-                    transaction["Avg_Buy(SOL)"] += new_transaction["Avg_Buy(SOL)"]
-                    if not transaction["SOL_Balance"]: transaction["SOL_Balance"] = new_transaction["SOL_Balance"]
-                    transaction["2x_Rockets"] += new_transaction["2x_Rockets"]
-                    transaction["5x_Rockets"] += new_transaction["5x_Rockets"]
-                    transaction["10x_Rockets"] += new_transaction["10x_Rockets"]
-                    break
-            else:
-                transactions.append(new_transaction)
-        await asyncio.sleep(20) # Sleep for 0.5 seconds to avoid rate limiting        
+        transaction = [get_transaction_details(sig, transaction_source) for sig in batch][0]
+
+        if transaction: 
+            # transactions.append(transaction[0])
+            position = next((index for index, item in enumerate(transactions) if item.get("wallet_address") == transaction["wallet_address"]), None)
+
+            if position:                
+                transactions[position]["win_rate"] = transactions[position]["win_rate"] + transaction["win_rate"]
+                transactions[position]["buy"] = transactions[position]["buy"] + transaction["buy"]
+                transactions[position]["trades"] = transactions[position]["trades"] + 1
+            else: 
+                transaction["trades"] = 1
+                transactions.append(transaction)
+
+        await asyncio.sleep(7) # Sleep for 0.5 seconds to avoid rate limiting        
     if transactions:
         return transactions
     return None
