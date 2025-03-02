@@ -39,7 +39,7 @@ def get_token_transactions(mint_address: str, period):
         if not tx_list:
             break   
         dt = datetime.fromtimestamp(block_time)
-        print(f"Fetching transactions for {start_time-block_time} seconds ago. Last block time: {block_time}: {dt}")
+        print(f"_____Fetching transactions for {start_time-block_time} seconds ago. Last block time: {block_time}: {dt}_____")
         before = transactions[-1]
         time.sleep(10)
     return transactions
