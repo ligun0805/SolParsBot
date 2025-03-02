@@ -2,7 +2,16 @@ from solana.rpc.api import Client
 from solders.pubkey import Pubkey  # Use solders.pubkey for new versions
 from solders.signature import Signature
 import time
+import requests
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# Telegram API URL
+url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
 # Connect to Solana mainnet
 solana_client = Client("https://api.mainnet-beta.solana.com")
@@ -10,7 +19,7 @@ RPC_URL = "https://api.mainnet-beta.solana.com"
 TOKEN_MINT_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
 GET_SIGNATURE_LIMIT = 1000 # Max limit is 1000
-ONE_DAY_PERIOD = 86000 # One day is 86400
+ONE_DAY_PERIOD = 86400 # One day is 86400
 
 tx_source_paydium = [
     "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C", 
@@ -22,7 +31,7 @@ tx_source_paydium = [
 tx_source_pumpfun = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
 
 # Fetch token transaction signatures for a specific mint address
-def get_token_transactions(mint_address: str, period):
+def get_token_transactions(mint_address: str, period, USER_ID):
     before = None
     transactions = []
     pubkey = Pubkey.from_string(mint_address)  # Convert mint address to Pubkey
@@ -39,7 +48,8 @@ def get_token_transactions(mint_address: str, period):
         if not tx_list:
             break   
         dt = datetime.fromtimestamp(block_time)
-        print(f"_____Fetching transactions for {start_time-block_time} seconds ago. Last block time: {block_time}: {dt}_____")
+        MESSAGE=f"Fetching signature for _{start_time-block_time}_ s ago. Last block time: {dt}"
+        requests.post(url, data={"chat_id": USER_ID, "text": MESSAGE})
         before = transactions[-1]
         time.sleep(10)
     return transactions

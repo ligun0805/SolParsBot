@@ -1,4 +1,5 @@
 import os
+import requests
 import logging
 import asyncio
 from datetime import datetime
@@ -39,6 +40,9 @@ filter_data = [
 # Load environment variables
 load_dotenv()
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+# Telegram API URL
+url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
@@ -112,7 +116,7 @@ async def process_data(update: Update, context: CallbackContext) -> int:
     if not user_data[user_id]["filters"]["Date_Period"]: user_data[user_id]["filters"]["Date_Period"] = 1
     for token in tokens:  
         filename = f"{user_id}.xlsx"
-        transactions = await token_analysis(token, user_data[user_id]["filters"]["Date_Period"], transaction_source)
+        transactions = await token_analysis(token, user_data[user_id]["filters"]["Date_Period"], transaction_source, user_id)
         if transactions:
             filtered_transactions = filter_wallets(transactions, user_data[user_id]["filters"])
             # export_to_excel(transactions, filename)
@@ -133,18 +137,20 @@ async def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 # Analyze the tokens
-async def token_analysis(mint_address, filter_period, transaction_source):
+async def token_analysis(mint_address, filter_period, transaction_source, user_id):
     global FILENAME
     
     transactions = []
     batch_size = 1 # Number of transactions to fetch in each batch
     now_local = datetime.now()
     FILENAME = int(now_local.timestamp())
-    
     # Token Mint Address List
-    signatures = get_token_transactions(mint_address, int(filter_period))
-    for i in tqdm(range(0, len(signatures)), desc="Fetching Transactions"):
+    signatures = get_token_transactions(mint_address, int(filter_period), user_id)
+    transaction_len = len(signatures)
+    for i in tqdm(range(0, transaction_len), desc="Fetching Transactions"):
         batch = signatures[i:i + batch_size]
+        MESSAGE=f"Fetching transaction for __{i+1}/{transaction_len}__"
+        requests.post(url, data={"chat_id": user_id, "text": MESSAGE})
         transaction = [get_transaction_details(sig, transaction_source) for sig in batch][0]
 
         if transaction: 
