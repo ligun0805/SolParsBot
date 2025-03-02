@@ -98,18 +98,21 @@ async def receive_txt_file(update: Update, context: CallbackContext) -> int:
 async def receive_filters(update: Update, context: CallbackContext) -> int:
     """Handles filter input from the user."""
     user_id = update.message.chat_id
-    text = update.message.text
+    text = update.message.text        
     filter_key = filter_data[len(user_data[user_id]['filters'])]
-    user_data[user_id]["filters"][filter_key] = text
-    if len(user_data[user_id]["filters"]) < 19 : 
-        await update.message.reply_text(f"{filter_data[len(user_data[user_id]['filters'])]}:") 
+    user_data[user_id]["filters"][filter_key] = text    
+    
+    if filter_key == "Date_Period" :       
+        return PROCESSING
+    
+    else:
+        await update.message.reply_text(f"{filter_data[len(user_data[user_id]['filters'])]}:")
         return FILTER_INPUT
-    else:  
-        return PROCESSING    
+        
 
 async def process_data(update: Update, context: CallbackContext) -> int:    
-    """Simulates processing token data and exports results as Excel files."""
-    await update.message.reply_text("Start Analysis ... ")
+    """Simulates processing token data and exports results as Excel files."""    
+    await update.message.reply_text("Start Analysis ... ")   
     user_id = update.message.chat_id
     tokens = user_data[user_id]["tokens"]
     transaction_source = user_data[user_id]["filters"]["Raydium/PumpFum_input_0_or_1"]
