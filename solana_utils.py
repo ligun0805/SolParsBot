@@ -33,11 +33,13 @@ def get_token_transactions(mint_address: str, period):
         result = solana_client.get_signatures_for_address(pubkey, before=before,limit=GET_SIGNATURE_LIMIT) 
         tx_list = result.value
         transactions.extend([tx.signature for tx in tx_list])
-        if tx_list[GET_SIGNATURE_LIMIT-1].block_time <= end_time: 
+        block_time = tx_list[GET_SIGNATURE_LIMIT-1].block_time
+        if block_time <= end_time: 
             break
         if not tx_list:
             break   
-        
+        dt = datetime.fromtimestamp(block_time)
+        print(f"Fetching transactions for {start_time-block_time} seconds ago. Last block time: {block_time}: {dt}")
         before = transactions[-1]
         time.sleep(10)
     return transactions
