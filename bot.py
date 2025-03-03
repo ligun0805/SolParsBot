@@ -102,16 +102,20 @@ async def receive_filters(update: Update, context: CallbackContext) -> int:
     filter_key = filter_data[len(user_data[user_id]['filters'])]
     user_data[user_id]["filters"][filter_key] = text    
     
-    if filter_key == "Date_Period" :       
+    if filter_key == "Min_Rockets" :      
+        await update.message.reply_text(f"{filter_data[len(user_data[user_id]['filters'])]}:")      
         return PROCESSING
     
     else:
         await update.message.reply_text(f"{filter_data[len(user_data[user_id]['filters'])]}:")
         return FILTER_INPUT
-        
 
 async def process_data(update: Update, context: CallbackContext) -> int:    
-    """Simulates processing token data and exports results as Excel files."""    
+    """Simulates processing token data and exports results as Excel files.""" 
+    user_id = update.message.chat_id   
+    text = update.message.text 
+    user_data[user_id]["filters"]["Date_Period"] = text
+    print(text)
     await update.message.reply_text("Start Analysis ... ")   
     user_id = update.message.chat_id
     tokens = user_data[user_id]["tokens"]
