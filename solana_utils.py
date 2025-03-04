@@ -51,7 +51,7 @@ def get_token_transactions(mint_address: str, period, USER_ID):
         MESSAGE=f"Fetching signature for _{start_time-block_time}_ s ago. Last block time: {dt}"
         requests.post(url, data={"chat_id": USER_ID, "text": MESSAGE})
         before = transactions[-1]
-        time.sleep(10)
+        time.sleep(5)
     return transactions
 
 def get_transaction_details(signature, tx_source):  
