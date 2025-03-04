@@ -172,7 +172,7 @@ async def token_analysis(mint_address, filter_period, transaction_source, user_i
                 transaction["trades"] = 1
                 transactions.append(transaction)
 
-        await asyncio.sleep(7) # Sleep for 0.5 seconds to avoid rate limiting        
+        await asyncio.sleep(6) # Sleep for 0.5 seconds to avoid rate limiting        
     if transactions:
         return transactions
     return None
